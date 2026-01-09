@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hole Overview Overlay</title>
+
+  <style>
+    :root{
+      /* Hybrid A (broadcast) + C (minimal) */
+      --bg: rgba(10,12,16,0.72);
+      --bg2: rgba(10,12,16,0.50);
+      --ink: #f3f5f7;
+      --muted: rgba(243,245,247,0.75);
+      --dim: rgba(243,245,247,0.55);
+      --line: rgba(243,245,247,0.20);
+
+      --accent: #ffffff; /* keep clean; change if you want a brand color */
+      --radius: 18px;
+      --shadow: 0 18px 60px rgba(0,0,0,0.35);
+      --pad: 22px;
+
+      --w: 1920px;
+      --h: 1080px;
+
+      --title: 44px;
+      --big: 28px;
+      --base: 18px;
+      --small: 14px;
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    /* Canvas fixed to 1080p for consistent export */
+    html,body{ height:100%; margin:0; background:#0a0c10; }
+    body{
+      display:grid;
+      place-items:center;
+      font-family: var(--sans);
+      color: var(--ink);
+      overflow:hidden;
+    }
+
+    .frame{
+      width: var(--w);
+      height: var(--h);
+      position: relative;
+      background: #0a0c10;
+      overflow:hidden;
+    }
+
+    /* Optional background layer (put your drone video behind in edit)
+       You can also set a background image for preview. */
+    .bg{
+      position:absolute; inset:0;
+      background:
+        radial-gradient(1200px 700px at 20% 80%, rgba(255,255,255,0.06), transparent 60%),
+        radial-gradient(900px 520px at 80% 20%, rgba(255,255,255,0.05), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.55));
+      filter: saturate(1.02) contrast(1.02);
+      pointer-events:none;
+    }
+
+    .grain{
+      position:absolute; inset:0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+      opacity: .18;
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+
+    /* Overlay card placement (safe-zone bottom-left) */
+    .card{
+      position:absolute;
+      left: 70px;
+      bottom: 70px;
+      width: 820px;
+      padding: var(--pad);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--bg), var(--bg2));
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transform-origin: left bottom;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: in 650ms ease-out 120ms forwards;
+    }
+
+    @keyframes in{
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .top{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+
+    .kicker{
+      font-size: var(--small);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 6px;
+    }
+
+    .holeTitle{
+      font-size: var(--title);
+      font-weight: 750;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    .metaRight{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      font-size: var(--base);
+      font-weight: 650;
+      letter-spacing: .01em;
+    }
+
+    .pill small{
+      font-size: var(--small);
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .mid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding-top: 2px;
+    }
+
+    .line1{
+      font-size: var(--big);
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    .line2{
+      font-size: var(--base);
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* Simple hole diagram strip */
+    .strip{
+      margin-top: 10px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      gap: 12px;
+    }
+
+    .diagram{
+      flex:1;
+      height: 44px;
+      position: relative;
+    }
+
+    .diagram::before{
+      content:"";
+      position:absolute;
+      left: 10px; right: 10px; top: 50%;
+      height: 2px;
+      background: rgba(255,255,255,0.20);
+      transform: translateY(-50%);
+      border-radius: 99px;
+    }
+
+    .dot{
+      position:absolute;
+      top: 50%;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      transform: translate(-50%,-50%);
+      background: rgba(255,255,255,0.85);
+      box-shadow: 0 0 0 6px rgba(255,255,255,0.12);
+    }
+
+    .dot.tee{ left: 10px; }
+    .dot.lz{ left: 48%; background: rgba(255,255,255,0.75); }
+    .dot.green{ left: calc(100% - 10px); }
+
+    .labels{
+      display:flex;
+      justify-content:space-between;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: rgba(243,245,247,0.70);
+      letter-spacing: .04em;
+      margin-top: 6px;
+      padding: 0 2px;
+    }
+
+    .tag{
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: rgba(243,245,247,0.78);
+      white-space:nowrap;
+    }
+
+    /* A little “broadcast” corner bug (optional) */
+    .bug{
+      position:absolute;
+      left: 70px;
+      bottom: 70px;
+      transform: translateY(-150px);
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(10,12,16,0.35);
+      backdrop-filter: blur(10px);
+      font-size: 13px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: rgba(243,245,247,0.70);
+      opacity: 0;
+      animation: bugIn 650ms ease-out 120ms forwards;
+    }
+
+    @keyframes bugIn{
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Edit these values per hole -->
+  <div class="frame"
+       data-event="Ozark Invitational"
+       data-course="Diamond Hills CC"
+       data-tee="Blue Tees"
+       data-hole="7"
+       data-par="4"
+       data-yards="392"
+       data-hook="Narrow landing. Miss right brings trees into play."
+       data-tag="Risk–Reward">
+
+    <div class="bg"></div>
+    <div class="grain"></div>
+
+    <div class="bug" id="bug"></div>
+
+    <section class="card" id="card">
+      <div class="top">
+        <div>
+          <div class="kicker" id="kicker"></div>
+          <div class="holeTitle" id="holeTitle"></div>
+        </div>
+
+        <div class="metaRight">
+          <div class="pill"><small>PAR</small> <span id="par"></span></div>
+          <div class="pill"><small>YDS</small> <span id="yards"></span></div>
+        </div>
+      </div>
+
+      <div class="mid">
+        <div class="line1" id="courseLine"></div>
+        <div class="line2" id="hook"></div>
+      </div>
+
+      <div class="strip">
+        <div class="diagram" aria-hidden="true">
+          <div class="dot tee" title="Tee"></div>
+          <div class="dot lz" title="Landing Zone"></div>
+          <div class="dot green" title="Green"></div>
+
+          <div class="labels">
+            <span>TEE</span>
+            <span>LZ</span>
+            <span>GREEN</span>
+          </div>
+        </div>
+
+        <div class="tag" id="tag"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const frame = document.querySelector('.frame');
+    const d = frame.dataset;
+
+    document.getElementById('kicker').textContent = `${d.event} • HOLE OVERVIEW`;
+    document.getElementById('holeTitle').textContent = `HOLE ${d.hole}`;
+    document.getElementById('par').textContent = d.par;
+    document.getElementById('yards').textContent = d.yards;
+    document.getElementById('courseLine').textContent = `${d.course} • ${d.tee}`;
+    document.getElementById('hook').textContent = d.hook;
+    document.getElementById('tag').textContent = d.tag || '—';
+
+    document.getElementById('bug').textContent = `${d.event} • ${d.course}`;
+  </script>
+</body>
+</html>
