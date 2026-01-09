@@ -3,570 +3,331 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hole Overview Overlay + Editor</title>
+<title>Golf Shot Overlay</title>
 
 <style>
-  :root{
-    --bg: rgba(10,12,16,0.72);
-    --bg2: rgba(10,12,16,0.45);
-    --ink: #f3f5f7;
-    --muted: rgba(243,245,247,0.75);
-    --dim: rgba(243,245,247,0.55);
-    --line: rgba(243,245,247,0.18);
+:root{
+  --bg: rgba(10,12,16,0.72);
+  --bg2: rgba(10,12,16,0.45);
+  --ink: #f3f5f7;
+  --muted: rgba(243,245,247,0.75);
+  --dim: rgba(243,245,247,0.55);
+  --line: rgba(243,245,247,0.18);
 
-    --radius: 16px;
-    --shadow: 0 16px 48px rgba(0,0,0,0.35);
+  --radius: 16px;
+  --shadow: 0 16px 48px rgba(0,0,0,0.35);
 
-    --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  }
+  --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
 
-  *{ box-sizing:border-box; }
-  html,body{ margin:0; width:100%; height:100%; background:#0a0c10; color:var(--ink); font-family:var(--sans); }
+*{ box-sizing:border-box; }
+html,body{
+  margin:0; width:100%; height:100%;
+  background:#0a0c10; color:var(--ink);
+  font-family:var(--sans);
+}
 
-  /* ===== Overlay ===== */
-  .overlay{
-    position:fixed;
-    inset:0;
-    padding: min(4vw, 48px);
-    pointer-events:none;
-  }
+/* ===== Overlay ===== */
+.overlay{
+  position:fixed;
+  inset:0;
+  padding:min(4vw,48px);
+  pointer-events:none;
+}
 
-  .card{
-    position:absolute;
-    left:0;
-    bottom:0;
-    max-width: min(92vw, 720px);
-    background: linear-gradient(180deg, var(--bg), var(--bg2));
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: clamp(14px, 2.2vw, 22px);
-    animation: enter 600ms ease-out forwards;
-    opacity:0;
-    transform: translateY(12px);
-  }
+.card{
+  position:absolute;
+  left:0; bottom:0;
+  max-width:min(92vw,760px);
+  background:linear-gradient(180deg,var(--bg),var(--bg2));
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);
+  padding:clamp(14px,2.2vw,22px);
+}
 
-  @keyframes enter { to{ opacity:1; transform:none; } }
+.top{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:10px;
+}
 
-  .top{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-end;
-    gap:12px;
-    padding-bottom:10px;
-    border-bottom:1px solid var(--line);
-  }
+.holeBlock .hole{
+  font-size:clamp(28px,4vw,42px);
+  font-weight:700;
+  line-height:1;
+}
+.holeBlock .meta{
+  font-size:12px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--dim);
+}
 
-  .kicker{
-    font-size: clamp(10px, 1.2vw, 12px);
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    color: var(--dim);
-    margin-bottom:4px;
-  }
+.stats{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.pill{
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.06);
+  font-size:clamp(13px,1.6vw,16px);
+  font-weight:600;
+}
+.pill small{
+  font-size:10px;
+  letter-spacing:.14em;
+  margin-right:6px;
+  color:var(--muted);
+  text-transform:uppercase;
+}
 
-  .hole{
-    font-size: clamp(28px, 4vw, 42px);
-    font-weight:700;
-    line-height:1;
-  }
+.mid{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:12px;
+}
+.leftInfo{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.shotLine{
+  font-size:clamp(18px,2.4vw,22px);
+  font-weight:650;
+}
+.comment{
+  font-size:clamp(13px,1.7vw,16px);
+  color:var(--muted);
+  line-height:1.35;
+}
 
-  .stats{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.rightInfo{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+  font-family:var(--mono);
+}
+.rightInfo span{
+  font-size:13px;
+  color:var(--muted);
+}
 
-  .pill{
-    padding: 8px 12px;
-    border-radius:999px;
-    border:1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.06);
-    font-size: clamp(13px, 1.6vw, 16px);
-    font-weight:600;
-    white-space:nowrap;
-  }
+/* ===== Progress Bar ===== */
+.progress{
+  margin-top:14px;
+  padding-top:10px;
+  border-top:1px solid var(--line);
+}
+.track{
+  position:relative;
+  height:6px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.18);
+}
+.ball{
+  position:absolute;
+  top:50%;
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:#fff;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 0 6px rgba(255,255,255,0.15);
+}
+.labels{
+  margin-top:6px;
+  display:flex;
+  justify-content:space-between;
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--dim);
+}
 
-  .pill small{
-    font-size:10px;
-    letter-spacing:.16em;
-    margin-right:6px;
-    color:var(--muted);
-    text-transform:uppercase;
-  }
+/* ===== Editor ===== */
+.editorBtn{
+  position:fixed;
+  right:24px; bottom:24px;
+  z-index:20;
+  pointer-events:auto;
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(10,12,16,0.55);
+  color:rgba(243,245,247,0.85);
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
 
-  .mid{ margin-top:10px; }
-  .course{ font-size: clamp(15px, 1.9vw, 18px); font-weight:600; }
-  .hook{ font-size: clamp(13px, 1.7vw, 16px); color:var(--muted); margin-top:4px; line-height:1.35; }
+.panel{
+  position:fixed;
+  right:24px; top:24px;
+  width:min(92vw,420px);
+  background:rgba(10,12,16,0.85);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:18px;
+  padding:16px;
+  z-index:30;
+  display:none;
+}
+.panel.open{ display:block; }
 
-  .strip{ margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
-  .diagram{ position:relative; height:32px; }
-  .diagram::before{
-    content:"";
-    position:absolute; left:8px; right:8px; top:50%;
-    height:2px; background: rgba(255,255,255,0.22);
-    transform:translateY(-50%); border-radius:99px;
-  }
-  .dot{
-    position:absolute; top:50%; width:10px; height:10px;
-    border-radius:50%; background:#fff;
-    transform:translate(-50%,-50%);
-  }
-  .dot.tee{ left:8px; }
-  .dot.lz{ left:50%; opacity:.75; }
-  .dot.green{ left:calc(100% - 8px); }
+.panel h2{
+  font-size:14px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  margin:0 0 10px;
+}
 
-  .labels{
-    display:flex; justify-content:space-between;
-    font-family:var(--mono);
-    font-size:11px; color:var(--dim);
-    margin-top:6px;
-  }
-
-  /* ===== Tiny “Edit” affordance ===== */
-  .editBtn{
-    position:fixed;
-    right: min(3vw, 28px);
-    bottom: min(3vw, 28px);
-    pointer-events:auto;
-    z-index:30;
-    padding: 10px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(10,12,16,0.55);
-    color: rgba(243,245,247,0.85);
-    font-size: 12px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    backdrop-filter: blur(10px);
-    cursor:pointer;
-  }
-
-  /* ===== Editor Panel ===== */
-  .panelWrap{
-    position:fixed;
-    inset:0;
-    z-index:40;
-    display:none;
-    pointer-events:auto;
-    padding: min(4vw, 48px);
-    background: rgba(0,0,0,0.35);
-    backdrop-filter: blur(6px);
-  }
-  .panelWrap.open{ display:block; }
-
-  .panel{
-    position:absolute;
-    right: min(4vw, 48px);
-    top: min(4vw, 48px);
-    width: min(92vw, 420px);
-    border-radius: 18px;
-    background: rgba(10,12,16,0.82);
-    border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-    padding: 16px;
-  }
-
-  .panel h2{
-    margin: 0 0 10px;
-    font-size: 14px;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    color: rgba(243,245,247,0.85);
-  }
-
-  .hint{
-    font-size: 12px;
-    color: rgba(243,245,247,0.65);
-    margin-bottom: 12px;
-    line-height: 1.35;
-  }
-
-  .grid{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .row{ display:flex; flex-direction:column; gap:6px; }
-  label{
-    font-size: 11px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: rgba(243,245,247,0.65);
-  }
-  input, textarea, select{
-    font-family: var(--sans);
-    font-size: 14px;
-    padding: 10px 10px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.06);
-    color: rgba(243,245,247,0.90);
-    outline:none;
-  }
-  textarea{ min-height: 74px; resize: vertical; }
-
-  .actions{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-top: 12px;
-  }
-  .btn{
-    padding: 10px 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.06);
-    color: rgba(243,245,247,0.90);
-    font-size: 13px;
-    cursor:pointer;
-  }
-  .btn.primary{
-    background: rgba(255,255,255,0.12);
-    border-color: rgba(255,255,255,0.18);
-    font-weight: 650;
-  }
-  .btn.danger{
-    background: rgba(255,70,70,0.12);
-    border-color: rgba(255,70,70,0.22);
-  }
-
-  .footerNote{
-    margin-top: 10px;
-    font-size: 12px;
-    color: rgba(243,245,247,0.55);
-    line-height: 1.35;
-  }
-
-  /* If you want a clean record view, press R to hide buttons */
-  body.record .editBtn{ display:none; }
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+label{
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--dim);
+}
+input,textarea{
+  width:100%;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.06);
+  color:var(--ink);
+}
+textarea{ grid-column:1/-1; min-height:70px; }
 </style>
 </head>
 
 <body>
 
-<!-- Overlay -->
-<div class="overlay" aria-hidden="true">
-  <section class="card" id="card">
+<div class="overlay">
+  <section class="card">
     <div class="top">
-      <div>
-        <div class="kicker" id="kicker">—</div>
-        <div class="hole" id="hole">—</div>
+      <div class="holeBlock">
+        <div class="meta">Hole</div>
+        <div class="hole" id="hole">7</div>
       </div>
       <div class="stats">
-        <div class="pill"><small>Par</small><span id="par">—</span></div>
-        <div class="pill"><small>Yds</small><span id="yards">—</span></div>
+        <div class="pill"><small>Par</small><span id="par">4</span></div>
+        <div class="pill"><small>Total</small><span id="total">400</span>y</div>
       </div>
     </div>
 
     <div class="mid">
-      <div class="course" id="course">—</div>
-      <div class="hook" id="hook">—</div>
+      <div class="leftInfo">
+        <div class="shotLine" id="shotLine">2nd Shot • 7-Iron</div>
+        <div class="comment" id="comment">Left side opens up the green.</div>
+      </div>
+      <div class="rightInfo">
+        <span id="remaining">100 yds remaining</span>
+      </div>
     </div>
 
-    <div class="strip">
-      <div class="diagram">
-        <div class="dot tee"></div>
-        <div class="dot lz"></div>
-        <div class="dot green"></div>
+    <div class="progress">
+      <div class="track">
+        <div class="ball" id="ball"></div>
       </div>
       <div class="labels">
-        <span>TEE</span><span>LZ</span><span>GREEN</span>
+        <span>Tee</span><span>Green</span>
       </div>
     </div>
   </section>
 </div>
 
-<button class="editBtn" id="toggleEditor" title="Press E to edit">Edit</button>
+<button class="editorBtn" id="editBtn">Edit</button>
 
-<!-- Editor Panel -->
-<div class="panelWrap" id="panelWrap">
-  <div class="panel">
-    <h2>Overlay Editor</h2>
-    <div class="hint">
-      Press <b>E</b> to toggle this panel. Press <b>R</b> for “record mode” (hides the Edit button).<br/>
-      Your last values auto-save locally.
+<div class="panel" id="panel">
+  <h2>Shot Editor</h2>
+  <div class="grid">
+    <div>
+      <label>Hole</label>
+      <input id="holeIn" type="number" value="7">
     </div>
-
-    <div class="grid">
-      <div class="row">
-        <label for="event">Event</label>
-        <input id="event" type="text" placeholder="Ozark Invitational" />
-      </div>
-      <div class="row">
-        <label for="mode">Label</label>
-        <input id="mode" type="text" placeholder="Hole Overview" />
-      </div>
-
-      <div class="row">
-        <label for="courseIn">Course</label>
-        <input id="courseIn" type="text" placeholder="Diamond Hills CC" />
-      </div>
-      <div class="row">
-        <label for="tee">Tee</label>
-        <input id="tee" type="text" placeholder="Blue Tees" />
-      </div>
-
-      <div class="row">
-        <label for="holeIn">Hole #</label>
-        <input id="holeIn" type="number" min="1" max="18" />
-      </div>
-      <div class="row">
-        <label for="parIn">Par</label>
-        <input id="parIn" type="number" min="3" max="6" />
-      </div>
-
-      <div class="row">
-        <label for="yardsIn">Yards</label>
-        <input id="yardsIn" type="number" min="50" max="700" />
-      </div>
-      <div class="row">
-        <label for="presetSelect">Presets</label>
-        <select id="presetSelect">
-          <option value="">— Load preset —</option>
-        </select>
-      </div>
+    <div>
+      <label>Par</label>
+      <input id="parIn" type="number" value="4">
     </div>
-
-    <div class="row" style="margin-top:10px;">
-      <label for="hookIn">Hook line</label>
-      <textarea id="hookIn" placeholder="Narrow landing. Miss right brings trees into play."></textarea>
+    <div>
+      <label>Total Yards</label>
+      <input id="totalIn" type="number" value="400">
     </div>
-
-    <div class="actions">
-      <button class="btn primary" id="saveNow">Save</button>
-      <button class="btn" id="savePreset">Save preset</button>
-      <button class="btn" id="copyLink">Copy link</button>
-      <button class="btn danger" id="deletePreset">Delete preset</button>
-      <button class="btn" id="closeEditor">Close</button>
+    <div>
+      <label>Remaining</label>
+      <input id="remainIn" type="number" value="100">
     </div>
-
-    <div class="footerNote">
-      Tip: Make one preset per hole (e.g., “DH Hole 7”) and you’ll never touch the HTML again.
+    <div>
+      <label>Shot #</label>
+      <input id="shotIn" type="number" value="2">
+    </div>
+    <div>
+      <label>Club</label>
+      <input id="clubIn" value="7-Iron">
+    </div>
+    <div>
+      <label>Comment</label>
+      <textarea id="commentIn">Left side opens up the green.</textarea>
     </div>
   </div>
 </div>
 
 <script>
-(function(){
-  const els = {
-    kicker: document.getElementById('kicker'),
-    hole: document.getElementById('hole'),
-    par: document.getElementById('par'),
-    yards: document.getElementById('yards'),
-    course: document.getElementById('course'),
-    hook: document.getElementById('hook'),
-    card: document.getElementById('card'),
+const $ = id => document.getElementById(id);
 
-    // inputs
-    event: document.getElementById('event'),
-    mode: document.getElementById('mode'),
-    courseIn: document.getElementById('courseIn'),
-    tee: document.getElementById('tee'),
-    holeIn: document.getElementById('holeIn'),
-    parIn: document.getElementById('parIn'),
-    yardsIn: document.getElementById('yardsIn'),
-    hookIn: document.getElementById('hookIn'),
+function update(){
+  const hole = +holeIn.value;
+  const par = +parIn.value;
+  const total = +totalIn.value;
+  const remain = Math.max(0, +remainIn.value);
+  const shot = +shotIn.value;
+  const club = clubIn.value;
+  const comment = commentIn.value;
 
-    presetSelect: document.getElementById('presetSelect'),
-    panelWrap: document.getElementById('panelWrap'),
-    toggleEditor: document.getElementById('toggleEditor'),
-    closeEditor: document.getElementById('closeEditor'),
+  holeEl.textContent = hole;
+  parEl.textContent = par;
+  totalEl.textContent = total;
 
-    saveNow: document.getElementById('saveNow'),
-    savePreset: document.getElementById('savePreset'),
-    copyLink: document.getElementById('copyLink'),
-    deletePreset: document.getElementById('deletePreset'),
-  };
+  shotLine.textContent = `${shot}${ordinal(shot)} Shot • ${club}`;
+  remaining.textContent = `${remain} yds remaining`;
+  commentEl.textContent = comment;
 
-  const STORAGE_KEY = "holeOverlay:last";
-  const PRESETS_KEY = "holeOverlay:presets";
+  const progress = Math.min(1, Math.max(0, 1 - remain / total));
+  ball.style.left = `${progress * 100}%`;
+}
 
-  const defaults = {
-    event: "Ozark Invitational",
-    mode: "Hole Overview",
-    course: "Diamond Hills CC",
-    tee: "Blue Tees",
-    hole: "7",
-    par: "4",
-    yards: "392",
-    hook: "Narrow landing. Miss right brings trees into play."
-  };
+function ordinal(n){
+  return n===1?'st':n===2?'nd':n===3?'rd':'th';
+}
 
-  function getPresets(){
-    try { return JSON.parse(localStorage.getItem(PRESETS_KEY) || "{}"); }
-    catch { return {}; }
-  }
-  function setPresets(obj){
-    localStorage.setItem(PRESETS_KEY, JSON.stringify(obj));
-  }
+const holeEl = $('hole');
+const parEl = $('par');
+const totalEl = $('total');
+const shotLine = $('shotLine');
+const remaining = $('remaining');
+const commentEl = $('comment');
+const ball = $('ball');
 
-  function setCard(data){
-    els.kicker.textContent = `${(data.event || "").trim()} • ${(data.mode || "").trim()}`.replace(/\s•\s$/,'');
-    els.hole.textContent = `Hole ${data.hole || ""}`.trim();
-    els.par.textContent = data.par || "";
-    els.yards.textContent = data.yards || "";
-    els.course.textContent = `${(data.course||"").trim()} • ${(data.tee||"").trim()}`.replace(/\s•\s$/,'');
-    els.hook.textContent = data.hook || "";
-  }
+[
+  holeIn,parIn,totalIn,remainIn,shotIn,clubIn,commentIn
+].forEach(el=>el.addEventListener('input',update));
 
-  function readInputs(){
-    return {
-      event: els.event.value,
-      mode: els.mode.value,
-      course: els.courseIn.value,
-      tee: els.tee.value,
-      hole: els.holeIn.value,
-      par: els.parIn.value,
-      yards: els.yardsIn.value,
-      hook: els.hookIn.value
-    };
-  }
+editBtn.onclick = ()=>panel.classList.toggle('open');
 
-  function writeInputs(data){
-    els.event.value = data.event ?? "";
-    els.mode.value = data.mode ?? "";
-    els.courseIn.value = data.course ?? "";
-    els.tee.value = data.tee ?? "";
-    els.holeIn.value = data.hole ?? "";
-    els.parIn.value = data.par ?? "";
-    els.yardsIn.value = data.yards ?? "";
-    els.hookIn.value = data.hook ?? "";
-  }
-
-  function saveLast(data){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
-  function loadLast(){
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); }
-    catch { return null; }
-  }
-
-  function parseUrl(){
-    const p = new URLSearchParams(location.search);
-    if (![...p.keys()].length) return null;
-    const out = {};
-    for (const k of ["event","mode","course","tee","hole","par","yards","hook"]){
-      if (p.has(k)) out[k] = p.get(k);
-    }
-    return out;
-  }
-
-  function buildShareUrl(data){
-    const p = new URLSearchParams();
-    for (const k of ["event","mode","course","tee","hole","par","yards","hook"]){
-      if (data[k] != null && String(data[k]).trim() !== "") p.set(k, data[k]);
-    }
-    const url = new URL(location.href);
-    url.search = p.toString();
-    return url.toString();
-  }
-
-  function populatePresetSelect(){
-    const presets = getPresets();
-    // reset
-    els.presetSelect.innerHTML = `<option value="">— Load preset —</option>`;
-    Object.keys(presets).sort().forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      els.presetSelect.appendChild(opt);
-    });
-  }
-
-  function applyData(data){
-    // normalize / fill
-    const merged = { ...defaults, ...data };
-    writeInputs(merged);
-    setCard(merged);
-    saveLast(merged);
-  }
-
-  function openEditor(){ els.panelWrap.classList.add('open'); }
-  function closeEditor(){ els.panelWrap.classList.remove('open'); }
-
-  // Live update on input
-  const inputEls = [els.event, els.mode, els.courseIn, els.tee, els.holeIn, els.parIn, els.yardsIn, els.hookIn];
-  inputEls.forEach(el => {
-    el.addEventListener('input', () => {
-      const data = readInputs();
-      setCard({ ...defaults, ...data });
-      saveLast({ ...defaults, ...data });
-    });
-  });
-
-  // Buttons
-  els.toggleEditor.addEventListener('click', () => {
-    els.panelWrap.classList.contains('open') ? closeEditor() : openEditor();
-  });
-  els.closeEditor.addEventListener('click', closeEditor);
-
-  els.saveNow.addEventListener('click', () => {
-    const data = { ...defaults, ...readInputs() };
-    saveLast(data);
-    setCard(data);
-  });
-
-  els.savePreset.addEventListener('click', () => {
-    const name = prompt("Preset name (e.g., DH Hole 7):");
-    if (!name) return;
-    const presets = getPresets();
-    presets[name] = { ...defaults, ...readInputs() };
-    setPresets(presets);
-    populatePresetSelect();
-    els.presetSelect.value = name;
-  });
-
-  els.deletePreset.addEventListener('click', () => {
-    const name = els.presetSelect.value;
-    if (!name) return;
-    const ok = confirm(`Delete preset "${name}"?`);
-    if (!ok) return;
-    const presets = getPresets();
-    delete presets[name];
-    setPresets(presets);
-    populatePresetSelect();
-  });
-
-  els.presetSelect.addEventListener('change', () => {
-    const name = els.presetSelect.value;
-    if (!name) return;
-    const presets = getPresets();
-    if (presets[name]) applyData(presets[name]);
-  });
-
-  els.copyLink.addEventListener('click', async () => {
-    const data = { ...defaults, ...readInputs() };
-    const url = buildShareUrl(data);
-    try{
-      await navigator.clipboard.writeText(url);
-      alert("Link copied!");
-    }catch{
-      // fallback
-      prompt("Copy this link:", url);
-    }
-  });
-
-  // Keyboard shortcuts
-  window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'e'){
-      els.panelWrap.classList.contains('open') ? closeEditor() : openEditor();
-    }
-    if (e.key.toLowerCase() === 'r'){
-      document.body.classList.toggle('record');
-    }
-    if (e.key === 'Escape'){
-      closeEditor();
-    }
-  });
-
-  // Initialize
-  populatePresetSelect();
-
-  const fromUrl = parseUrl();
-  const fromLocal = loadLast();
-  applyData(fromUrl || fromLocal || defaults);
-
-})();
+update();
 </script>
 
 </body>
