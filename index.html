@@ -20,7 +20,6 @@
   --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* Pill sizing */
   --pill-h: 40px;
   --pill-pad-x: 12px;
 }
@@ -43,7 +42,7 @@ html,body{
 .card{
   position:absolute;
   left:0; bottom:0;
-  max-width:min(92vw,820px);
+  max-width:min(92vw,860px);
   background:linear-gradient(180deg,var(--bg),var(--bg2));
   border:1px solid rgba(255,255,255,0.10);
   border-radius:var(--radius);
@@ -67,14 +66,12 @@ html,body{
   flex-direction:column;
   gap:6px;
 }
-
 .meta{
   font-size:12px;
   letter-spacing:.16em;
   text-transform:uppercase;
   color:var(--dim);
 }
-
 .hole{
   font-size:clamp(28px,4vw,42px);
   font-weight:750;
@@ -96,13 +93,11 @@ html,body{
   align-items:center;
   justify-content:center;
   gap:8px;
-
   padding: 0 var(--pill-pad-x);
   border-radius:999px;
   border:1px solid rgba(255,255,255,0.12);
   background:rgba(255,255,255,0.06);
-
-  line-height:1; /* prevents weird baseline drift */
+  line-height:1;
   white-space:nowrap;
 }
 
@@ -114,7 +109,7 @@ html,body{
   font-weight:750;
   line-height:1;
   display:block;
-  transform: translateY(0.5px); /* tiny optical correction */
+  transform: translateY(0.5px);
 }
 
 .pill .val{
@@ -154,13 +149,17 @@ html,body{
   line-height:1.35;
 }
 
-.remaining{
+.sideInfo{
   font-family:var(--mono);
   font-size:13px;
   color:var(--muted);
   padding-top:2px;
   text-align:right;
+  white-space:nowrap;
 }
+
+/* Hide club info when on green */
+body.onGreen .shotClub { display:none; }
 
 /* Progress */
 .progress{
@@ -196,6 +195,9 @@ html,body{
   color:var(--dim);
 }
 
+/* Swap labels when on green */
+#labelLeft, #labelRight { transition: opacity 120ms linear; }
+
 /* ===== Editor ===== */
 .editorBtn{
   position:fixed;
@@ -216,7 +218,7 @@ html,body{
 .panel{
   position:fixed;
   right:24px; top:24px;
-  width:min(92vw,420px);
+  width:min(92vw,460px);
   background:rgba(10,12,16,0.85);
   border:1px solid rgba(255,255,255,0.12);
   border-radius:18px;
@@ -245,7 +247,7 @@ label{
   text-transform:uppercase;
   color:var(--dim);
 }
-input,textarea{
+input,textarea,select{
   width:100%;
   padding:10px;
   border-radius:12px;
@@ -254,6 +256,19 @@ input,textarea{
   color:var(--ink);
 }
 textarea{ grid-column:1/-1; min-height:70px; }
+
+.hr{
+  grid-column:1/-1;
+  height:1px;
+  background: rgba(255,255,255,0.10);
+  margin: 4px 0;
+}
+.note{
+  grid-column:1/-1;
+  font-size:12px;
+  color: rgba(243,245,247,0.60);
+  line-height:1.35;
+}
 </style>
 </head>
 
@@ -282,11 +297,14 @@ textarea{ grid-column:1/-1; min-height:70px; }
 
     <div class="mid">
       <div>
-        <div class="shotLine" id="shotLine">2nd Shot • 7-Iron</div>
+        <div class="shotLine">
+          <span id="shotLine">2nd Shot</span>
+          <span class="shotClub" id="clubInline"> • 7-Iron</span>
+        </div>
         <div class="comment" id="comment">Left side opens up the green.</div>
       </div>
 
-      <div class="remaining" id="remaining">100 yds remaining</div>
+      <div class="sideInfo" id="sideInfo">100 yds remaining</div>
     </div>
 
     <div class="progress">
@@ -294,7 +312,8 @@ textarea{ grid-column:1/-1; min-height:70px; }
         <div class="ball" id="ball"></div>
       </div>
       <div class="labels">
-        <span>Tee</span><span>Green</span>
+        <span id="labelLeft">Tee</span>
+        <span id="labelRight">Green</span>
       </div>
     </div>
   </section>
@@ -304,31 +323,61 @@ textarea{ grid-column:1/-1; min-height:70px; }
 
 <div class="panel" id="panel">
   <h2>Shot Editor</h2>
+
   <div class="grid">
     <div>
-      <label>Hole</label>
-      <input id="holeIn" type="number" value="7">
-    </div>
-    <div>
-      <label>Par</label>
-      <input id="parIn" type="number" value="4">
-    </div>
-    <div>
-      <label>Total Yards</label>
-      <input id="totalIn" type="number" value="400">
-    </div>
-    <div>
-      <label>Remaining</label>
-      <input id="remainIn" type="number" value="100">
+      <label>Mode</label>
+      <select id="modeIn">
+        <option value="off">Off Green</option>
+        <option value="green">On Green</option>
+      </select>
     </div>
     <div>
       <label>Shot #</label>
-      <input id="shotIn" type="number" value="2">
+      <input id="shotIn" type="number" value="2" min="1">
+    </div>
+
+    <div>
+      <label>Hole</label>
+      <input id="holeIn" type="number" value="7" min="1" max="18">
     </div>
     <div>
-      <label>Club</label>
+      <label>Par</label>
+      <input id="parIn" type="number" value="4" min="3" max="6">
+    </div>
+
+    <div>
+      <label>Total Yards</label>
+      <input id="totalIn" type="number" value="400" min="50" max="700">
+    </div>
+    <div>
+      <label>Club (off green)</label>
       <input id="clubIn" value="7-Iron">
     </div>
+
+    <div>
+      <label>Remaining (yds)</label>
+      <input id="remainYdsIn" type="number" value="100" min="0" max="800">
+    </div>
+    <div>
+      <label>Ft to pin (green)</label>
+      <input id="ftToPinIn" type="number" value="18" min="0" max="200">
+    </div>
+
+    <div class="note">
+      Optional for green progress: set <b>Putt Start (ft)</b> to the initial putt distance (e.g., 18).
+      Then update <b>Ft to pin</b> each putt (e.g., 3) to move the ball toward the hole.
+    </div>
+
+    <div>
+      <label>Putt Start (ft)</label>
+      <input id="puttStartIn" type="number" value="18" min="1" max="200">
+    </div>
+    <div>
+      <label>(auto) Side display</label>
+      <input id="sidePreview" value="—" disabled>
+    </div>
+
     <div style="grid-column:1/-1;">
       <label>Comment</label>
       <textarea id="commentIn">Left side opens up the green.</textarea>
@@ -337,40 +386,79 @@ textarea{ grid-column:1/-1; min-height:70px; }
 </div>
 
 <script>
-const $ = id => document.getElementById(id);
+const $ = (id)=>document.getElementById(id);
 
 function ordinal(n){
   return n===1?'st':n===2?'nd':n===3?'rd':'th';
 }
-
 function clamp01(x){ return Math.min(1, Math.max(0, x)); }
 
 function update(){
-  const hole = +holeIn.value || 1;
-  const par = +parIn.value || 4;
-  const total = Math.max(1, +totalIn.value || 400);
-  const remain = Math.max(0, +remainIn.value || 0);
-  const shot = Math.max(1, +shotIn.value || 1);
-  const club = (clubIn.value || "").trim() || "—";
-  const comment = (commentIn.value || "").trim();
+  const mode = $('modeIn').value;
 
+  const hole = +$('holeIn').value || 1;
+  const par = +$('parIn').value || 4;
+  const total = Math.max(1, +$('totalIn').value || 400);
+
+  const shot = Math.max(1, +$('shotIn').value || 1);
+  const club = ($('clubIn').value || "").trim() || "—";
+
+  const remainYds = Math.max(0, +$('remainYdsIn').value || 0);
+
+  const ftToPin = Math.max(0, +$('ftToPinIn').value || 0);
+  const puttStart = Math.max(1, +$('puttStartIn').value || Math.max(1, ftToPin));
+
+  const comment = ($('commentIn').value || "").trim();
+
+  // Mode class
+  document.body.classList.toggle('onGreen', mode === 'green');
+
+  // Top values
   $('hole').textContent = hole;
   $('par').textContent = par;
   $('total').textContent = total;
 
-  $('shotLine').textContent = `${shot}${ordinal(shot)} Shot • ${club}`;
-  $('remaining').textContent = `${remain} yds remaining`;
+  // Shot line + club (club hidden on green by CSS)
+  $('shotLine').textContent = `${shot}${ordinal(shot)} Shot`;
+  $('clubInline').textContent = ` • ${club}`;
+
+  // Comment
   $('comment').textContent = comment || " ";
 
-  const progress = clamp01(1 - (remain / total));
+  // Side info + progress + labels
+  let progress = 0;
+
+  if (mode === 'green'){
+    // Side info becomes "ft to pin"
+    $('sideInfo').textContent = `${ftToPin} ft to pin`;
+    $('sidePreview').value = `${ftToPin} ft to pin`;
+
+    // Progress becomes ball → hole
+    progress = clamp01(1 - (ftToPin / puttStart));
+
+    $('labelLeft').textContent = "Ball";
+    $('labelRight').textContent = "Hole";
+  } else {
+    $('sideInfo').textContent = `${remainYds} yds remaining`;
+    $('sidePreview').value = `${remainYds} yds remaining`;
+
+    // Progress becomes tee → green (hole progress)
+    progress = clamp01(1 - (remainYds / total));
+
+    $('labelLeft').textContent = "Tee";
+    $('labelRight').textContent = "Green";
+  }
+
   $('ball').style.left = `${progress * 100}%`;
 }
 
-['holeIn','parIn','totalIn','remainIn','shotIn','clubIn','commentIn'].forEach(id=>{
-  $(id).addEventListener('input', update);
-});
+// Wire inputs
+[
+  'modeIn','holeIn','parIn','totalIn','shotIn','clubIn',
+  'remainYdsIn','ftToPinIn','puttStartIn','commentIn'
+].forEach(id => $(id).addEventListener('input', update));
 
-$('editBtn').onclick = () => $('panel').classList.toggle('open');
+$('editBtn').onclick = ()=> $('panel').classList.toggle('open');
 
 update();
 </script>
