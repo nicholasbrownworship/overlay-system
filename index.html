@@ -19,6 +19,10 @@
 
   --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Pill sizing */
+  --pill-h: 40px;
+  --pill-pad-x: 12px;
 }
 
 *{ box-sizing:border-box; }
@@ -39,101 +43,139 @@ html,body{
 .card{
   position:absolute;
   left:0; bottom:0;
-  max-width:min(92vw,760px);
+  max-width:min(92vw,820px);
   background:linear-gradient(180deg,var(--bg),var(--bg2));
-  border:1px solid rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.10);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
   backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
   padding:clamp(14px,2.2vw,22px);
 }
 
 .top{
   display:flex;
+  align-items:center;
   justify-content:space-between;
   gap:14px;
   border-bottom:1px solid var(--line);
-  padding-bottom:10px;
+  padding-bottom:12px;
 }
 
-.holeBlock .hole{
-  font-size:clamp(28px,4vw,42px);
-  font-weight:700;
-  line-height:1;
+.leftTop{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
 }
-.holeBlock .meta{
+
+.meta{
   font-size:12px;
   letter-spacing:.16em;
   text-transform:uppercase;
   color:var(--dim);
 }
 
+.hole{
+  font-size:clamp(28px,4vw,42px);
+  font-weight:750;
+  line-height:1;
+}
+
+/* Pills */
 .stats{
   display:flex;
-  gap:8px;
+  gap:10px;
   flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:center;
 }
+
 .pill{
-  padding:8px 12px;
+  height: var(--pill-h);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+
+  padding: 0 var(--pill-pad-x);
   border-radius:999px;
   border:1px solid rgba(255,255,255,0.12);
   background:rgba(255,255,255,0.06);
-  font-size:clamp(13px,1.6vw,16px);
-  font-weight:600;
+
+  line-height:1; /* prevents weird baseline drift */
+  white-space:nowrap;
 }
+
 .pill small{
   font-size:10px;
   letter-spacing:.14em;
-  margin-right:6px;
-  color:var(--muted);
   text-transform:uppercase;
+  color:var(--muted);
+  font-weight:750;
+  line-height:1;
+  display:block;
+  transform: translateY(0.5px); /* tiny optical correction */
 }
 
+.pill .val{
+  font-size:clamp(14px,1.7vw,16px);
+  font-weight:700;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+}
+
+.pill .unit{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:650;
+  margin-left:2px;
+}
+
+/* Middle row */
 .mid{
-  margin-top:10px;
+  margin-top:12px;
   display:grid;
   grid-template-columns: 1fr auto;
-  gap:12px;
+  gap:14px;
+  align-items:start;
 }
-.leftInfo{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-}
+
 .shotLine{
   font-size:clamp(18px,2.4vw,22px);
-  font-weight:650;
+  font-weight:700;
+  letter-spacing:-0.01em;
 }
+
 .comment{
+  margin-top:4px;
   font-size:clamp(13px,1.7vw,16px);
   color:var(--muted);
   line-height:1.35;
 }
 
-.rightInfo{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:6px;
+.remaining{
   font-family:var(--mono);
-}
-.rightInfo span{
   font-size:13px;
   color:var(--muted);
+  padding-top:2px;
+  text-align:right;
 }
 
-/* ===== Progress Bar ===== */
+/* Progress */
 .progress{
   margin-top:14px;
-  padding-top:10px;
+  padding-top:12px;
   border-top:1px solid var(--line);
 }
+
 .track{
   position:relative;
   height:6px;
   border-radius:999px;
   background:rgba(255,255,255,0.18);
 }
+
 .ball{
   position:absolute;
   top:50%;
@@ -144,8 +186,9 @@ html,body{
   transform:translate(-50%,-50%);
   box-shadow:0 0 0 6px rgba(255,255,255,0.15);
 }
+
 .labels{
-  margin-top:6px;
+  margin-top:7px;
   display:flex;
   justify-content:space-between;
   font-family:var(--mono);
@@ -180,6 +223,7 @@ html,body{
   padding:16px;
   z-index:30;
   display:none;
+  pointer-events:auto;
 }
 .panel.open{ display:block; }
 
@@ -218,24 +262,31 @@ textarea{ grid-column:1/-1; min-height:70px; }
 <div class="overlay">
   <section class="card">
     <div class="top">
-      <div class="holeBlock">
+      <div class="leftTop">
         <div class="meta">Hole</div>
         <div class="hole" id="hole">7</div>
       </div>
+
       <div class="stats">
-        <div class="pill"><small>Par</small><span id="par">4</span></div>
-        <div class="pill"><small>Total</small><span id="total">400</span>y</div>
+        <div class="pill">
+          <small>PAR</small>
+          <span class="val" id="par">4</span>
+        </div>
+
+        <div class="pill">
+          <small>TOTAL</small>
+          <span class="val"><span id="total">400</span><span class="unit">y</span></span>
+        </div>
       </div>
     </div>
 
     <div class="mid">
-      <div class="leftInfo">
+      <div>
         <div class="shotLine" id="shotLine">2nd Shot • 7-Iron</div>
         <div class="comment" id="comment">Left side opens up the green.</div>
       </div>
-      <div class="rightInfo">
-        <span id="remaining">100 yds remaining</span>
-      </div>
+
+      <div class="remaining" id="remaining">100 yds remaining</div>
     </div>
 
     <div class="progress">
@@ -278,7 +329,7 @@ textarea{ grid-column:1/-1; min-height:70px; }
       <label>Club</label>
       <input id="clubIn" value="7-Iron">
     </div>
-    <div>
+    <div style="grid-column:1/-1;">
       <label>Comment</label>
       <textarea id="commentIn">Left side opens up the green.</textarea>
     </div>
@@ -288,44 +339,38 @@ textarea{ grid-column:1/-1; min-height:70px; }
 <script>
 const $ = id => document.getElementById(id);
 
-function update(){
-  const hole = +holeIn.value;
-  const par = +parIn.value;
-  const total = +totalIn.value;
-  const remain = Math.max(0, +remainIn.value);
-  const shot = +shotIn.value;
-  const club = clubIn.value;
-  const comment = commentIn.value;
-
-  holeEl.textContent = hole;
-  parEl.textContent = par;
-  totalEl.textContent = total;
-
-  shotLine.textContent = `${shot}${ordinal(shot)} Shot • ${club}`;
-  remaining.textContent = `${remain} yds remaining`;
-  commentEl.textContent = comment;
-
-  const progress = Math.min(1, Math.max(0, 1 - remain / total));
-  ball.style.left = `${progress * 100}%`;
-}
-
 function ordinal(n){
   return n===1?'st':n===2?'nd':n===3?'rd':'th';
 }
 
-const holeEl = $('hole');
-const parEl = $('par');
-const totalEl = $('total');
-const shotLine = $('shotLine');
-const remaining = $('remaining');
-const commentEl = $('comment');
-const ball = $('ball');
+function clamp01(x){ return Math.min(1, Math.max(0, x)); }
 
-[
-  holeIn,parIn,totalIn,remainIn,shotIn,clubIn,commentIn
-].forEach(el=>el.addEventListener('input',update));
+function update(){
+  const hole = +holeIn.value || 1;
+  const par = +parIn.value || 4;
+  const total = Math.max(1, +totalIn.value || 400);
+  const remain = Math.max(0, +remainIn.value || 0);
+  const shot = Math.max(1, +shotIn.value || 1);
+  const club = (clubIn.value || "").trim() || "—";
+  const comment = (commentIn.value || "").trim();
 
-editBtn.onclick = ()=>panel.classList.toggle('open');
+  $('hole').textContent = hole;
+  $('par').textContent = par;
+  $('total').textContent = total;
+
+  $('shotLine').textContent = `${shot}${ordinal(shot)} Shot • ${club}`;
+  $('remaining').textContent = `${remain} yds remaining`;
+  $('comment').textContent = comment || " ";
+
+  const progress = clamp01(1 - (remain / total));
+  $('ball').style.left = `${progress * 100}%`;
+}
+
+['holeIn','parIn','totalIn','remainIn','shotIn','clubIn','commentIn'].forEach(id=>{
+  $(id).addEventListener('input', update);
+});
+
+$('editBtn').onclick = () => $('panel').classList.toggle('open');
 
 update();
 </script>
